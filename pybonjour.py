@@ -109,7 +109,13 @@ else:
     _libdnssd = ctypes.cdll.LoadLibrary(_libdnssd)
     _CFunc = ctypes.CFUNCTYPE
 
+# PyPy detection
+try:
+    import __pypy__
 
+    PYPY = True
+except ImportError:
+    PYPY = False
 
 ################################################################################
 #
@@ -818,7 +824,6 @@ def _create_function_bindings():
 
         globals()['_' + name] = func
 
-
 # Only need to do this once
 _create_function_bindings()
 del _create_function_bindings
@@ -971,6 +976,9 @@ def DNSServiceEnumerateDomains(
                                             None)
     finally:
         _global_lock.release()
+
+    if PYPY:
+        sdRef = sdRef[0]
 
     sdRef._add_callback(_callback)
 
@@ -1142,6 +1150,9 @@ def DNSServiceRegister(
     finally:
         _global_lock.release()
 
+    if PYPY:
+        sdRef = sdRef[0]
+
     sdRef._add_callback(_callback)
 
     return sdRef
@@ -1211,6 +1222,9 @@ def DNSServiceAddRecord(
                                          ttl)
     finally:
         _global_lock.release()
+
+    if PYPY:
+        RecordRef = RecordRef[1]
 
     sdRef._add_record_ref(RecordRef)
 
@@ -1419,6 +1433,9 @@ def DNSServiceBrowse(
     finally:
         _global_lock.release()
 
+    if PYPY:
+        sdRef = sdRef[0]
+
     sdRef._add_callback(_callback)
 
     return sdRef
@@ -1545,6 +1562,9 @@ def DNSServiceResolve(
     finally:
         _global_lock.release()
 
+    if PYPY:
+        sdRef = sdRef[0]
+
     sdRef._add_callback(_callback)
 
     return sdRef
@@ -1568,6 +1588,9 @@ def DNSServiceCreateConnection():
         sdRef = _DNSServiceCreateConnection()
     finally:
         _global_lock.release()
+
+    if PYPY:
+        sdRef = sdRef[0]
 
     return sdRef
 
@@ -1682,6 +1705,9 @@ def DNSServiceRegisterRecord(
     finally:
         _global_lock.release()
 
+    if PYPY:
+        RecordRef = RecordRef[1]
+
     sdRef._add_callback(_callback)
     sdRef._add_record_ref(RecordRef)
 
@@ -1781,6 +1807,7 @@ def DNSServiceQueryRecord(
     @_DNSServiceQueryRecordReply
     def _callback(sdRef, flags, interfaceIndex, errorCode, fullname, rrtype,
                   rrclass, rdlen, rdata, ttl, context):
+        import pudb; pu.db
         if callBack is not None:
             rdata = _length_and_void_p_to_string(rdlen, rdata)
             callBack(sdRef, flags, interfaceIndex, errorCode, fullname.decode(),
@@ -1797,6 +1824,9 @@ def DNSServiceQueryRecord(
                                        None)
     finally:
         _global_lock.release()
+
+    if PYPY:
+        sdRef = sdRef[0]
 
     sdRef._add_callback(_callback)
 
